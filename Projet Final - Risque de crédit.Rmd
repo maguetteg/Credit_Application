@@ -1,0 +1,477 @@
+---
+title: "Projet : Risque de crédit"
+author: "Philippe Lettre-Vaillancourt, Marc-André Blanc, Maguette Guéno Ngom"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# Lecture de la base de données d'apprentissage et nettoyage des données 
+
+```{r}
+
+setwd("~/Desktop/Apprentissage statistique")
+credit = read.csv("ProjetFinal/Data_ProjetFinal/CreditGame_train.csv")
+head(credit)
+
+```
+
+
+<br>
+
+
+Changement du nom de la quatrième catégorie de ST_EMPL en "Others"  
+
+```{r}
+
+credit$ST_EMPL = as.factor(credit$ST_EMPL)
+levels(credit$ST_EMPL)[levels(credit$ST_EMPL)==""] = "Others"
+
+```
+
+
+<br>
+
+
+Test pour déterminer si le processus de valeurs manquantes de AGE_D est de type MNAR ou non     
+
+```{r}
+
+# Création d'une variable indicatrice appelée Z qui prend la valeur de 1 pour les observations manquantes de AGE_D
+Z = ifelse(is.na(credit$AGE_D) == FALSE, 0, 1)
+
+mod = glm(credit$DEFAULT~Z,family="binomial")
+summary(mod)
+
+```
+
+L'hypothèse nulle de ce test est $H_0$ : Z = 0 et l'hypothèse alternative est $H_1$ : Z $\ne$ 0 
+On voit que la statistique de ce est de -0.468 et la valeur-p est de 0.64. À un niveau de alpha = 0.05,
+la valeur-p est supérieure à alpha et donc la variable Z n'est pas significative dans ce modèle. On peut conclure que le processus de valeurs manquantes de AGE_D ne dépend pas de la variable DEFAULT. Nous ne sommes donc pas dans un cas de MNAR. 
+
+
+<br>
+
+
+```{r}
+
+credit0 = credit[(credit$PROFIT_LOSS > 0), ]
+credit1 = credit[(credit$PROFIT_LOSS < 0), ]
+mean(credit0$PROFIT_LOSS)  # = 1 123.95
+mean(credit1$PROFIT_LOSS)  # -16 201.38
+
+```
+
+On voit que les pertes moyennes sont plus élevées que les profits moyens. Étant donné qu'on cherche à maximiser les profits, il nous faudrait donc trouver l'équilibre adéquat entre le taux de faux négatifs et le taux de faux positifs. Le coût (perte engendrée) de ne pas prédire de défaut à tort est plus élevé que le coût (le profit qu'on aurait pu réaliser) de prédire un défaut à tort.    
+
+
+<br>
+
+
+Création des nouvelles variables RMU et RTS et drop des colonnes ID, REV_NET, NB_INTR_1M, et TYP_FIN
+
+```{r}
+
+# RMU = MNT_UTIL_REN/MNT_AUTO_REN
+credit$RMU = ifelse (credit$MNT_AUT_REN == 0, 0, 
+                           (credit$MNT_UTIL_REN/credit$MNT_AUT_REN ))
+
+# RTS = NB_SATI/NB_OPER
+credit$RTS = ifelse (credit$NB_OPER == 0, 0, (credit$NB_SATI/credit$NB_OPER ))
+
+
+# Drop des colonnes ID, REV_NET, NB_INTR_1M, et TYP_FIN
+credit = credit[, -c(1, 8, 17, 28)]
+
+```
+
+
+<br>
+
+
+Création des ensembles d'entraînement, de validation et de test respectivement avec les proportions 60%, 20% et 20%    
+
+```{r}
+
+set.seed(0202)
+n=nrow(credit)
+size.train=floor(n*0.60)
+size.valid=floor(n*0.20)
+size.test=n-size.train-size.valid
+
+id.train=sample(1:n,size.train,replace=FALSE)
+id.valid=sample(setdiff(1:n,id.train),size.valid,replace=FALSE)
+id.test=setdiff(setdiff(1:n,id.train),id.valid)
+
+credit.train = credit[id.train,]
+credit.valid = credit[id.valid,]
+credit.test = credit[id.test,]
+
+```
+
+
+<br>
+
+
+Traitement des valeurs manquantes de AGE_D   
+
+```{r}
+
+#Nous allons faire une imputation de AGE_D par la médiane
+med_age = median(credit.train$AGE_D, na.rm = TRUE)
+
+#Imputation sur les données de train/valid/test
+credit.train$AGE_D = ifelse(is.na(credit.train$AGE_D) == TRUE, med_age, credit.train$AGE_D)
+credit.valid$AGE_D = ifelse(is.na(credit.valid$AGE_D) == TRUE, med_age, credit.valid$AGE_D)
+credit.test$AGE_D = ifelse(is.na(credit.test$AGE_D) == TRUE, med_age, credit.test$AGE_D)
+
+```
+
+
+
+<br>
+
+
+# Entraînement et validation       
+
+
+Ajustement d'un modèle de régression logistique pour DEFAULT et avec pour variables explicatives NB_EMPT, R_ATD, PRT_VAL, DUREE, AGE_D, REV_BT, TYP_RES, ST_EMPL, MNT_EPAR, NB_ER_6MS, NB_ER_12MS, NB_DEC_12MS, NB_COUR, NB_INTR_12M, PIR_DEL, NB_DEL_30, NB_DEL_60, NB_DEL_90, MNT_PASS, MNT_ACT, MNT_DEMANDE, MNT_UTIL_REN, MNT_AUTOR_REN, NB_SATI et NB_OPER
+
+```{r}
+
+mod.base = glm(DEFAULT~., data=credit.train[,-c(27:29)], family=binomial(link="logit"))
+summary(mod.base)
+
+```
+
+Le AIC du modèle de base (avec les variables originales) est de 169182
+
+
+<br>
+
+
+Ajustement d'un modèle de régression logistique pour DEFAULT et avec pour variables explicatives NB_EMPT, R_ATD, PRT_VAL, DUREE, AGE_D, REV_BT, TYP_RES, ST_EMPL, MNT_EPAR, NB_ER_6MS, NB_ER_12MS, NB_DEC_12MS, NB_COUR, NB_INTR_12M, PIR_DEL, NB_DEL_30, NB_DEL_60, NB_DEL_90, MNT_PASS, MNT_ACT, MNT_DEMANDE, RTS et RMU
+
+```{r}
+
+mod.log = glm(DEFAULT~., data=credit.train[,-c(13, 22, 23, 24, 27)], family=binomial(link="logit"))
+summary(mod.log)
+
+```
+
+Le AIC de ce deuxième modèle (avec les nouvelles variables RMU et RTS) est de 167924.      
+On voit que le AIC de ce deuxième modèle est inférieur à celui du modèle de base. Ce second modèle est donc meilleur que le premier modèle (avec les variables originales) et c'est celui que nous allons considérer pour la suite de ce travail.     
+
+<br>
+
+
+Prédictions de $\hat{P}$(DEFAULT=1) sur l'ensemble de validation et calcul du AUC
+
+```{r}
+
+p.pred = predict.glm(mod.log, credit.valid[,-c(13, 22, 23, 24, 27)], type="response")
+
+# Calcul du AUC
+library(ROCR)
+pred = prediction(p.pred, credit.valid$DEFAULT)
+auc = performance(pred, measure="auc")
+auc@y.values
+
+```
+
+Le AUC sur l'échantillon de validation est de 0.7742464     
+
+
+<br>
+
+
+Notre objectif principal est de maximiser les profits de cette institution. Notre but est trouver le cutoff qui nous mènera à la combinaison idéale de taux de faux positifs et de faux négatifs. Dans un monde idéal, on aimerait que ces deux taux soient les plus bas possibles, mais la baisse de l'un entraîne la hausse de l'autre comme on le voit dans le graphique ci-dessous.    
+
+```{r}
+
+pred2 = prediction(p.pred, credit.valid$DEFAULT)
+perf2 = performance(pred2, measure="fpr", x.measure = "fnr")
+plot(perf2, main = "Taux de faux positifs en fonction du taux de faux négatifs")
+
+```
+
+
+<br>
+
+
+Pour trouver le cutoff optimal, essayons dans un premier temps de minimiser le taux de faux positifs et le taux de faux négatifs et reardons l'impact sur les profits/pertes totaux de la banque 
+
+````{r}
+
+opt.cut = function(perf, pred)
+{
+  cut.ind = mapply(FUN=function(x, y, p){
+    d = (x - 0)^2 + (y-0)^2
+    ind = which(d == min(d))
+    c(False_positive_rate = y[[ind]], False_negative_rate = x[[ind]],
+      cutoff = p[[ind]])
+  }, perf@x.values, perf@y.values, pred@cutoffs)
+}
+
+print(opt.cut(perf2, pred2))
+
+```
+
+Avec cette règle de décision, le cutoff optimal est de 0.05008655, le taux de faux négatifs est de 29.18% et le taux de faux positifs de 29.82%      
+
+
+<br>
+
+
+Prédictions de DEFAULT sur l'ensemble de validation   
+
+```{r}
+
+cutoff = 0.05008655
+val.pred = ifelse (p.pred > cutoff, 1, 0)
+
+# Matrice de confusion
+Mconf1 = table(val.pred, credit.valid$DEFAULT,dnn=c("Prediction","Observation"))
+Mconf1
+
+```
+ 
+Le taux de bonne classification est de 70.21%     
+Le taux de vrais positifs est de 70.82%      
+Le taux de vrais négatifs est de 70.18%     
+ 
+
+<br>
+
+
+Effet de ce seuil optimal sur les profits/pertes totaux de la banque     
+En se basant sur les prédictions de notre modèle, nous allons changer à 0 les pertes de toutes les observations pour lesquelles un défaut a été prédit quand un défaut a bien eu lieu, car aucun prêt ne sera accordé à ces personnes. Dans la même idée, nous allons changer à 0$ les profits de toutes les observations pour lesquelles un défaut a été prédit à tort. Le but est de comparer les profits réalisés avant le modèle et après le modèle 
+
+```{r}
+
+# Profit réalisé sans notre modèle (échantillon de validation)
+sum(credit.valid$PROFIT_LOSS)
+
+
+#Profit réalisé avec notre modèle
+loss.val1 = ifelse ( (val.pred == 1 & credit.valid$PROFIT_LOSS < 0), 0, 
+                     credit.valid$PROFIT_LOSS)
+loss.val2 = ifelse ( (val.pred == 1 & credit.valid$DEFAULT == 0), 0, 
+                     loss.val1)
+sum(loss.val2)
+
+```
+
+Les profits/pertes totaux réalisé par la banque s’élevaient à 42 864 737 dollars avant le modèle contre 84 531 031 dollars après notre modèle.
+
+
+
+<br>
+
+
+En pratique, nous avons essayé plusieurs valeurs de cutoff possibles sur l'ensemble de validation. Le cutoff optimal a été choisi en regardant l'effet de celui-ci sur les profits réalisés. Après plusieurs essais, le cutoff optimal trouvé est de 0.05706679
+
+```{r}
+
+cutoffs = data.frame(cut = perf2@alpha.values[[1]], fnr = perf2@x.values[[1]], fpr=perf2@y.values[[1]])
+cutoffs = cutoffs[order(cutoffs$fnr),]
+head(subset(cutoffs, fpr < 0.24882))
+
+```
+
+
+<br>
+
+
+Prédictions de DEFAULT sur l'ensemble de validation avec le cuttoff de 0.05706679
+
+```{r}
+
+cutoff2 = 0.05706679
+val.pred2 = ifelse (p.pred > cutoff2, 1, 0)
+
+# Matrice de confusion
+Mconf2 = table(val.pred2, credit.valid$DEFAULT,dnn=c("Prediction","Observation"))
+Mconf2
+
+```
+
+Le taux de bonne classification est de 74.62%        
+Le taux de vrais positifs est de 65.04%        
+Le taux de vrais négatifs est de 75.12%      
+Le taux de faux positifs est de 24.88%        
+Le taux de faux négatifs est de 34.95%
+
+
+<br>
+
+
+Évolution de PROFIT_LOSS avec ce nouveau optimal de 0.05706679
+
+```{r}
+
+# Profit réalisé sans notre modèle (échantillon de validation)
+sum(credit.valid$PROFIT_LOSS)
+
+
+#Profit réalisé avec notre modèle
+loss.val3 = ifelse ( (val.pred2 == 1 & credit.valid$PROFIT_LOSS < 0), 0, 
+                     credit.valid$PROFIT_LOSS)
+loss.val4 = ifelse ( (val.pred2 == 1 & credit.valid$DEFAULT == 0), 0, 
+                     loss.val3)
+sum(loss.val4)
+
+```
+
+Le profit réalisé sur l'ensemble de validation avant notre modèle est de 42 864 737 et le profit réalisé sur l'ensemble de validation après notre modèle est de 85 976 758
+
+
+<br>
+
+
+# Performance finale du modèle 
+
+Calcul de la performane finale de notre modèle sur l'ensemble de test  
+
+```{r}
+
+# Prédictions de P(DEFAULT=1) sur l'échantillon de test
+p.pred.test = predict.glm(mod.log, credit.test[,-c(13, 22, 23, 24, 27)], type="response")
+
+cutoff2 = 0.05706679
+# Prédictions de DEFAULT sur l'échantillon de test
+val.test = ifelse (p.pred.test > cutoff2, 1, 0)
+
+# Matrice de confusion pour l'échantillon de test
+Mtest = table(val.test, credit.test$DEFAULT, dnn=c("Prediction","Observation"))
+Mtest
+
+```
+
+Le taux de bonne classification est de 74.735%     
+Le taux de vrais positifs est de 64.16%%      
+Le taux de vrais négatifs est de 75.29%     
+Le taux de faux positifs est de 24.71%     
+Le taux de faux négatifs est de 35.84%         
+
+
+<br>
+
+
+Évolution des profits/pertes totaux sur l'ensemble de test avant et après le modèle.  
+
+```{r}
+
+# Profit réalisé sans notre modèle (échantillon de test)
+sum(credit.test$PROFIT_LOSS)
+
+
+#Profit réalisé avec notre modèle
+loss.test1 = ifelse ( (val.test == 1 & credit.test$PROFIT_LOSS < 0), 0, 
+                     credit.test$PROFIT_LOSS)
+loss.test2 = ifelse ( (val.test == 1 & credit.test$DEFAULT == 0), 0, 
+                     loss.test1)
+sum(loss.test2)
+
+```
+
+Le profit total réalisé avant le modèle était de 41 563 832. Après le modèle il s'élève à 83 539 569
+
+
+<br>
+
+
+
+# Ensemble d'application    
+
+Nous allons maintenant appliquer notre modèle sur l'échantillon d'application              
+
+```{r}
+
+appli = read.csv("ProjetFinal/Data_ProjetFinal/CreditGame_Application.csv")
+head(appli)
+
+```
+
+<br>
+
+
+Changement du nom de la quatrième catégorie de ST_EMPL et création de RMU et RTS pour l'ensemble d'application    
+
+```{r}
+
+appli$ST_EMPL = as.factor(appli$ST_EMPL)
+levels(appli$ST_EMPL)[levels(appli$ST_EMPL)==""] = "Others"
+
+# RMU = MNT_UTIL_REN/MNT_AUTO_REN
+appli$RMU = ifelse (appli$MNT_AUT_REN == 0, 0, 
+                           (appli$MNT_UTIL_REN/appli$MNT_AUT_REN ))
+
+# RTS = NB_SATI/NB_OPER
+appli$RTS = ifelse (appli$NB_OPER == 0, 0, (appli$NB_SATI/appli$NB_OPER ))
+
+
+# Drop des colonnes  REV_NET, NB_INTR_1M, et TYP_FIN
+appli = appli[, -c(8, 17, 28)]
+head(appli)
+
+```
+
+
+<br>
+
+
+Imputation pour les valeurs manquantes de AGE_D    
+```{r}
+
+appli$AGE_D = ifelse(is.na(appli$AGE_D) == TRUE, med_age, appli$AGE_D)
+
+```
+
+
+<br>
+
+
+```{r}
+
+#Prédictions de P(DEFAULT=1) sur l'ensemble d'application
+p.pred.appli = predict.glm(mod.log, appli[,-c(1, 14, 23, 24, 25)], type="response")
+
+cutoff = 0.05706679
+# Prédictions de DEFAULT sur l'ensemble d'application
+appli.def = ifelse (p.pred.appli > cutoff, 1, 0)
+table(appli.def)
+
+```
+
+
+<br>
+
+
+Création du fichier de résultats à remettre 
+
+```{r}
+
+MONTANT = ifelse(appli.def == 0, appli$MNT_DEMANDE, 0)
+resultats = data.frame(ID_TRAIN = appli$ID_TRAIN, MONTANT)
+head(resultats)
+
+```
+
+<br>
+
+
+Exportation des résultats en un fichier de type .csv       
+
+```{r}
+
+write.csv2(resultats, "Resultat_credit.csv")
+
+```
+
