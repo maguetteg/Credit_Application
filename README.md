@@ -12,14 +12,14 @@ To accomplish this task, several algorithms will be considered (logistic regress
 
 <font size="3"> To evaluate the performance of the differents models, we'll look at the following metrics. </font>  
 
-- <font size="3"> **Accuracy** measures how often the model is correct. In our context, it measures how often safe loans are correctly classified as safe and risky loans correctly classified as risky by our model </font>     
+- <font size="3"> **Accuracy** measures how often a model is correct. In our context, it measures how often safe loans are correctly classified as safe and risky loans correctly classified as risky by a model </font>     
 
-- <font size="3"> **False positive rate** is the proportion of safe loans that were incorrectly classified as risky by our model. </font>    
+- <font size="3"> **False positive rate** is the proportion of safe loans that were incorrectly classified as risky by a model. </font>    
 
-- <font size="3"> **False negative rate** is the proportion of risky loans that were incorrectly classified as safe by our model. </font>   
+- <font size="3"> **False negative rate** is the proportion of risky loans that were incorrectly classified as safe by a model. </font>   
 
 - <font size="3"> **Precision** is the proportion of truly risky loans among all the loans that were predicted as risky </font>     
 
-- <font size="3"> **Sensitivity** (also callded **true positive rate**) measures how good the model is at correctly identifying risky loans. It is the proportion of risky loans that were correctly classified as risky by the model.  </font>     
+- <font size="3"> **Sensitivity** (also callded **true positive rate**) measures how good a model is at correctly identifying risky loans. It is the proportion of risky loans that were correctly classified as risky by a model.  </font>     
 
-- <font size="3"> **Specificity** (also callded **true negative rate**) measures how good the model is at identifying safe loans. It is the proportion of safe loans that were correctly classified as safe by the model. </font> 
+- <font size="3"> **Specificity** (also callded **true negative rate**) measures how good a model is at identifying safe loans. It is the proportion of safe loans that were correctly classified as safe by a model. </font> 
