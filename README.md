@@ -33,18 +33,18 @@ To accomplish this task, several models will be considered (logistic regression,
 
 # Dataset      
 
-ID_TRAIN : Client ID
-TYP_FIN : Loan type (car, mortgage, personal ...)
-NB_EMPT : Number of borrowers
-R_ATD : Monthly expenses over monthly income
-PRT_VAL : Amount requested
-DUREE : Loan term
-AGE_D : Client age
-REV_BT : Gross Income
-REV_NET : Net Income
-TYP_RES : Residency (P: Owner, L: Tenant, A: Other)
-ST_EMPL : Employment status (R: full time, P: part-time, T: Self-employed) 
-MNT_EPAR : Savings ($)
+ID_TRAIN : Client ID   
+TYP_FIN : Loan type (car, mortgage, personal ...)     
+NB_EMPT : Number of borrowers      
+R_ATD : Monthly expenses over monthly income        
+PRT_VAL : Amount requested      
+DUREE : Loan term       
+AGE_D : Client age        
+REV_BT : Gross Income       
+REV_NET : Net Income        
+TYP_RES : Residency (P: Owner, L: Tenant, A: Other)       
+ST_EMPL : Employment status (R: full time, P: part-time, T: Self-employed)        
+MNT_EPAR : Savings ($)       
 NB_ER_6MS : Number of transactions declined due to insufficient funds over the last 6 months
 NB_ER_12MS : Number of transactions declined due to insufficient funds over the last 12 months
 NB_DEC_12MS : Number of credit limit exceedances over the last 12 months
