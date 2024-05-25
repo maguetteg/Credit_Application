@@ -1,4 +1,4 @@
-# Credit-Game
+# Credit Application
 
 In order to minimize losses and maximize profits, banks must carefully review financing requests. 
 The purpose of this project is to develop a model to assist a fictional financial institution in improving its financing approval process. 
@@ -22,4 +22,13 @@ To accomplish this task, several models will be considered (logistic regression,
 
 - <font size="3"> **Sensitivity** (also callded **true positive rate**) measures how good a model is at correctly identifying risky loans. It is the proportion of risky loans that were correctly classified as risky by a model.  </font>     
 
-- <font size="3"> **Specificity** (also callded **true negative rate**) measures how good a model is at identifying safe loans. It is the proportion of safe loans that were correctly classified as safe by a model. </font> 
+- <font size="3"> **Specificity** (also callded **true negative rate**) measures how good a model is at identifying safe loans. It is the proportion of safe loans that were correctly classified as safe by a model. </font>
+
+
+
+<font size="3"> **Dataset** </font> 
+
+
+
+
+
