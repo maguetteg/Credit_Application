@@ -6,7 +6,7 @@ To do so, we have access to a large database containing information about loans 
 Our goal is to maximize the bank's profits.      
 
 
-To accomplish this task, several models will be considered (logistic regression, random forest, boosting techniques, bagging techniques etc.) and their performances will be compared.   
+To accomplish this task, several models will be considered (random forest, boosting techniques, bagging techniques etc.) and their performances will be compared.   
 
 
 
