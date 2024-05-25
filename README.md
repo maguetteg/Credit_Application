@@ -31,8 +31,39 @@ To accomplish this task, several models will be considered (logistic regression,
 
 
 
-# Dataset
+# Dataset      
 
+ID_TRAIN : Client ID
+TYP_FIN : Loan type (car, mortgage, personal ...)
+NB_EMPT : Number of borrowers
+R_ATD : Monthly expenses over monthly income
+PRT_VAL : Amount requested
+DUREE : Loan term
+AGE_D : Client age
+REV_BT : Gross Income
+REV_NET : Net Income
+TYP_RES : Residency (P: Owner, L: Tenant, A: Other)
+ST_EMPL : Employment status (R: full time, P: part-time, T: Self-employed) 
+MNT_EPAR : Savings ($)
+NB_ER_6MS : Number of transactions declined due to insufficient funds over the last 6 months
+NB_ER_12MS : Number of transactions declined due to insufficient funds over the last 12 months
+NB_DEC_12MS : Number of credit limit exceedances over the last 12 months
+NB_OPER : Total number of transactions 
+NB_SATI : Total number of satisfactory transactions 
+NB_COUR : Total number of regular transactions
+NB_INTR_1M : Number of financing requests made over during the past last month
+NB_INTR_12M : Number of financing requests made over the past 12 months
+PIR_DEL : Worst deliquency
+NB_DEL_30 : Number of 30-59 days deliquency over the last 12 months
+NB_DEL_60 : Number of 60-89 days deliquency over the last 12 months
+NB_DEL_90 : Number of 90 days or more deliquency over the last 12 months
+MNT_PASS : Liabilities
+MNT_ACT : Assets
+MNT_AUT_REN : Authorized amount of revolving credit 
+MNT_UTIL_REN : Amount of revolving credit used
+MNT_DEMANDE : Amount of financing requested    
+DEFAULT : DEFAULT. A default is recorded when the payment is 90 days or more past due (1: default, 0: no default)      
+PROFIT_LOSS : Profit or loss incurred on the loan two years later     
 
 
 
